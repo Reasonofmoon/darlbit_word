@@ -2,7 +2,6 @@ import streamlit as st
 import base64
 import requests
 from bs4 import BeautifulSoup
-from gtts import gTTS
 import os
 import pandas as pd
 from textblob import TextBlob
@@ -96,13 +95,6 @@ def fetch_word_details(word):
         return definition, ipa, synonyms, antonyms, example_sentence
     return "Definition not found", None, "Not found", "Not found", "Not found"
 
-# Function to generate pronunciation audio
-def generate_pronunciation(word):
-    tts = gTTS(text=word, lang='en')
-    audio_path = f"./{word}.mp3"
-    tts.save(audio_path)
-    return audio_path
-
 # Create columns for the main content and usage guide
 col1, col2 = st.columns([3, 1])
 
@@ -131,7 +123,6 @@ with col1:
         for new_word in words:
             if new_word:
                 word_details, ipa, synonyms, antonyms, example_sentence = fetch_word_details(new_word)
-                audio_path = generate_pronunciation(new_word)
 
                 new_word_entry = {
                     "word": new_word,
@@ -145,8 +136,7 @@ with col1:
                     "source": df.loc[df['word'] == new_word, 'source'].values[0],
                     "important": df.loc[df['word'] == new_word, 'important'].values[0],
                     "definition": word_details,
-                    "ipa": ipa,
-                    "audio_path": audio_path
+                    "ipa": ipa
                 }
                 st.session_state.words.append(new_word_entry)
         st.success("CSV 파일에서 단어 리스트가 성공적으로 추가되었습니다!")
@@ -162,7 +152,6 @@ with col1:
 
             for new_word in words:
                 word_details, ipa, synonyms, antonyms, example_sentence = fetch_word_details(new_word)
-                audio_path = generate_pronunciation(new_word)
 
                 new_word_entry = {
                     "word": new_word,
@@ -176,8 +165,7 @@ with col1:
                     "source": "Uploaded Text",
                     "important": False,
                     "definition": word_details,
-                    "ipa": ipa,
-                    "audio_path": audio_path
+                    "ipa": ipa
                 }
                 st.session_state.words.append(new_word_entry)
             st.success("텍스트 파일에서 단어 리스트가 성공적으로 추가되었습니다!")
@@ -238,7 +226,7 @@ with col1:
         st.experimental_rerun()
 
 with col2:
-    st.title("사용법 안내")
+    st.title("사용법")
     st.markdown(
         """
         ### Darlbit Word Subsumption 사용법
