@@ -3,3 +3,4 @@ gtts
 beautifulsoup4
 requests
 pandas
+PyDictionary
