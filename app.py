@@ -66,16 +66,19 @@ with col1:
 
     # Links
     links = [
-        ("사이트", "https://spiffy-fig-443.notion.site/Reason-of-Moon-c68af35321f24e418bec2b804adadf7a"),
-        ("Twitter", "https://twitter.com/reasonofmoon"),
-        ("Instagram", "https://www.instagram.com/darlsam37"),
-        ("YouTube1", "https://www.youtube.com/@reasonofmoon"),
-        ("YouTube2", "https://www.youtube.com/@meta_prompt"),
-        ("Moonlang", "https://moonlang.com")
+        ("🌐", "사이트", "https://spiffy-fig-443.notion.site/Reason-of-Moon-c68af35321f24e418bec2b804adadf7a"),
+        ("🐦", "Twitter", "https://twitter.com/reasonofmoon"),
+        ("📷", "Instagram", "https://www.instagram.com/darlsam37"),
+        ("▶️", "YouTube1", "https://www.youtube.com/@reasonofmoon"),
+        ("▶️", "YouTube2", "https://www.youtube.com/@meta_prompt"),
+        ("🌙", "Moonlang", "https://moonlang.com")
     ]
 
-    for name, url in links:
-        st.markdown(f'<div class="link-box"><a href="{url}" target="_blank">{name}</a></div>', unsafe_allow_html=True)
+    link_cols = st.columns(len(links))
+    for i, (emoji, name, url) in enumerate(links):
+        with link_cols[i]:
+            st.markdown(f'<div class="link-box"><a href="{url}" target="_blank">{emoji} {name}</a></div>',
+                        unsafe_allow_html=True)
 
     # Initialize session state for words and deleted words if not already done
     if 'words' not in st.session_state:
@@ -131,7 +134,6 @@ with col1:
             tts.save(audio_path)
             return audio_path
         except gTTSError as e:
-            st.warning(f"Error generating pronunciation for word: {word}. Skipping audio.")
             return None
 
 
@@ -170,7 +172,8 @@ with col1:
                     "ipa": ipa,
                     "audio_path": audio_path
                 }
-                st.session_state.words.append(new_word_entry)
+                if new_word not in [word_entry["word"] for word_entry in st.session_state.words]:
+                    st.session_state.words.append(new_word_entry)
         st.success("CSV 파일에서 단어 리스트가 성공적으로 추가되었습니다!")
         st.experimental_rerun()  # Reload the page to reflect changes
 
