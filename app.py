@@ -1,13 +1,8 @@
 import streamlit as st
 import base64
-import requests
-from bs4 import BeautifulSoup
-from gtts import gTTS
-from gtts.tts import gTTSError
-import os
 import pandas as pd
 import re
-from PyDictionary import PyDictionary
+from nltk.corpus import wordnet as wn
 import io
 
 # Set page configuration with a title and icon
@@ -88,47 +83,36 @@ with col1:
         st.session_state.words = []
     if 'deleted_words' not in st.session_state:
         st.session_state.deleted_words = []
-    if 'play_pronunciation' not in st.session_state:
-        st.session_state.play_pronunciation = True
 
-    # Function to fetch word details from PyDictionary
+    # Function to fetch word details using WordNet
     def fetch_word_details(word):
-        dictionary = PyDictionary()
+        synsets = wn.synsets(word)
+        if not synsets:
+            return "Definition not found", "Not found", "Not found", "Not found"
 
-        try:
-            meanings = dictionary.meaning(word)
-            if meanings:
-                definition = ' '.join(meanings[list(meanings.keys())[0]])
-            else:
-                definition = "Definition not found"
-        except:
-            definition = "Definition not found"
+        # Get the first synset
+        synset = synsets[0]
 
-        try:
-            synonyms = ', '.join(dictionary.synonym(word))
-            if not synonyms:
-                synonyms = "Not found"
-        except:
-            synonyms = "Not found"
+        # Definition
+        definition = synset.definition()
 
-        try:
-            antonyms = ', '.join(dictionary.antonym(word))
-            if not antonyms:
-                antonyms = "Not found"
-        except:
-            antonyms = "Not found"
+        # Examples
+        examples = "; ".join(synset.examples()) if synset.examples() else "Not found"
 
-        return definition, synonyms, antonyms
+        # Synonyms
+        synonyms = set()
+        for lemma in synset.lemmas():
+            synonyms.add(lemma.name())
+        synonyms = ', '.join(synonyms)
 
-    # Function to generate pronunciation audio
-    def generate_pronunciation(word):
-        try:
-            tts = gTTS(text=word, lang='en')
-            audio_path = f"./{word}.mp3"
-            tts.save(audio_path)
-            return audio_path
-        except gTTSError as e:
-            return None
+        # Antonyms
+        antonyms = set()
+        for lemma in synset.lemmas():
+            for antonym in lemma.antonyms():
+                antonyms.add(antonym.name())
+        antonyms = ', '.join(antonyms)
+
+        return definition, synonyms, antonyms, examples
 
     # Text area for user input
     user_input = st.text_area("정리되지 않은 영어 단어 리스트 입력")
@@ -144,30 +128,23 @@ with col1:
         df['definition'] = ""
         df['synonyms'] = ""
         df['antonyms'] = ""
-        df['derivatives'] = ""
-        df['example'] = ""
+        df['examples'] = ""
 
         for new_word in words:
             if new_word:
-                definition, synonyms, antonyms = fetch_word_details(new_word)
-                audio_path = generate_pronunciation(new_word)
+                definition, synonyms, antonyms, examples = fetch_word_details(new_word)
 
                 new_word_entry = {
                     "word": new_word,
                     "definition": definition,
                     "synonyms": synonyms,
                     "antonyms": antonyms,
-                    "derivatives": "",  # You can add code to fetch derivatives if available in the dictionary
-                    "example": "",  # You can add code to fetch examples if available in the dictionary
-                    "audio_path": audio_path
+                    "examples": examples
                 }
                 if new_word not in [word_entry["word"] for word_entry in st.session_state.words]:
                     st.session_state.words.append(new_word_entry)
         st.success("입력한 단어 리스트가 성공적으로 추가되었습니다!")
         st.experimental_rerun()  # Reload the page to reflect changes
-
-    # Toggle switch for pronunciation
-    st.session_state.play_pronunciation = st.checkbox('발음 듣기', value=st.session_state.play_pronunciation)
 
     # Display the words in a table format
     def display_words(words):
@@ -178,13 +155,9 @@ with col1:
                 "의미": word_entry['definition'],
                 "동의어": word_entry['synonyms'],
                 "반의어": word_entry['antonyms'],
-                "파생어": word_entry['derivatives'],
-                "예문": word_entry['example']
+                "예문": word_entry['examples']
             }
             data.append(word_info)
-
-            if st.session_state.play_pronunciation and word_entry["audio_path"]:
-                st.audio(word_entry["audio_path"], format='audio/mp3', start_time=0)
 
         df = pd.DataFrame(data)
         st.dataframe(df)
@@ -220,11 +193,10 @@ with col2:
     st.markdown("""
     1. 화면 상단의 링크를 클릭하여 관련 사이트와 소셜 미디어 채널에 접속할 수 있습니다.
     2. 정리되지 않은 영어 단어 리스트를 텍스트 영역에 입력합니다. 한 줄에 한 단어씩 입력하거나 공백으로 구분하여 여러 단어를 입력할 수 있습니다.
-    3. 입력한 단어 리스트는 자동으로 분석되어 의미, 동의어, 반의어, 파생어, 예문 등의 정보와 함께 표시됩니다.
-    4. '발음 듣기' 체크박스를 선택하여 단어의 발음을 들을 수 있습니다.
-    5. '모든 단어 삭제' 버튼을 클릭하여 현재 단어 목록을 삭제할 수 있습니다.
-    6. '모든 삭제된 단어 복원' 버튼을 클릭하여 삭제된 단어를 복원할 수 있습니다.
-    7. 단어 목록 아래의 'Excel 파일 다운로드' 링크를 클릭하여 현재 단어 목록을 Excel 파일로 다운로드할 수 있습니다.
+    3. 입력한 단어 리스트는 자동으로 분석되어 의미, 동의어, 반의어, 예문 등의 정보와 함께 표시됩니다.
+    4. '모든 단어 삭제' 버튼을 클릭하여 현재 단어 목록을 삭제할 수 있습니다.
+    5. '모든 삭제된 단어 복원' 버튼을 클릭하여 삭제된 단어를 복원할 수 있습니다.
+    6. 단어 목록 아래의 'Excel 파일 다운로드' 링크를 클릭하여 현재 단어 목록을 Excel 파일로 다운로드할 수 있습니다.
     """)
 
     st.warning("중요: 앱을 종료하기 전에 반드시 'Excel 파일 다운로드' 링크를 클릭하여 현재 단어 목록을 저장하십시오. 앱을 종료하면 데이터가 사라질 수 있습니다.")
