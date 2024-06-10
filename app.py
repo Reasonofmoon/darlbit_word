@@ -2,7 +2,6 @@ import streamlit as st
 import base64
 import requests
 from bs4 import BeautifulSoup
-import os
 import pandas as pd
 from textblob import TextBlob
 
@@ -140,7 +139,6 @@ with col1:
                 }
                 st.session_state.words.append(new_word_entry)
         st.success("CSV 파일에서 단어 리스트가 성공적으로 추가되었습니다!")
-        st.experimental_rerun()  # Reload the page to reflect changes
 
     if uploaded_text_file is not None:
         text = uploaded_text_file.read().decode("utf-8")
@@ -169,7 +167,6 @@ with col1:
                 }
                 st.session_state.words.append(new_word_entry)
             st.success("텍스트 파일에서 단어 리스트가 성공적으로 추가되었습니다!")
-            st.experimental_rerun()  # Reload the page to reflect changes
 
     # Filter options
     selected_difficulty = st.selectbox('난이도로 필터', ['모두', '쉬움', '중간', '어려움'])
@@ -204,9 +201,7 @@ with col1:
         csv = df.to_csv(index=False)
         b64 = base64.b64encode(csv.encode()).decode()
         href = f'<a href="data:file/csv;base64,{b64}" download="words.csv">CSV 파일 다운로드</a>'
-        if st.button('CSV 파일 다운로드'):
-            st.markdown(href, unsafe_allow_html=True)
-            st.stop()
+        st.markdown(href, unsafe_allow_html=True)
 
     filtered_words = st.session_state.words
     if selected_difficulty != '모두':
@@ -226,7 +221,7 @@ with col1:
         st.experimental_rerun()
 
 with col2:
-    st.title("사용법")
+    st.title("사용법 안내")
     st.markdown(
         """
         ### Darlbit Word Subsumption 사용법
