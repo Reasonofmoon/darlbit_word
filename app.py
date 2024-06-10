@@ -8,20 +8,7 @@ import os
 import pandas as pd
 import re
 from PyDictionary import PyDictionary
-import nltk
 import io
-
-# Ensure required NLTK data is downloaded
-try:
-    nltk.data.find('wordnet')
-except LookupError:
-    try:
-        nltk.download('wordnet')
-    except BrokenPipeError:
-        # Retry the download if BrokenPipeError occurs
-        nltk.download('wordnet')
-
-from nltk.corpus import wordnet as wn
 
 # Set page configuration with a title and icon
 st.set_page_config(
@@ -104,7 +91,7 @@ with col1:
     if 'play_pronunciation' not in st.session_state:
         st.session_state.play_pronunciation = True
 
-    # Function to fetch word details from PyDictionary and NLTK
+    # Function to fetch word details from PyDictionary
     def fetch_word_details(word):
         dictionary = PyDictionary()
 
@@ -131,17 +118,7 @@ with col1:
         except:
             antonyms = "Not found"
 
-        # Get examples from WordNet
-        try:
-            examples = []
-            for synset in wn.synsets(word):
-                examples.extend(synset.examples())
-            if not examples:
-                examples = ["No examples found"]
-        except:
-            examples = ["No examples found"]
-
-        return definition, synonyms, antonyms, examples
+        return definition, synonyms, antonyms
 
     # Function to generate pronunciation audio
     def generate_pronunciation(word):
@@ -172,7 +149,7 @@ with col1:
 
         for new_word in words:
             if new_word:
-                definition, synonyms, antonyms, examples = fetch_word_details(new_word)
+                definition, synonyms, antonyms = fetch_word_details(new_word)
                 audio_path = generate_pronunciation(new_word)
 
                 new_word_entry = {
@@ -181,7 +158,7 @@ with col1:
                     "synonyms": synonyms,
                     "antonyms": antonyms,
                     "derivatives": "",  # You can add code to fetch derivatives if available in the dictionary
-                    "example": '; '.join(examples),  # Use examples from WordNet
+                    "example": "",  # Examples are not provided by PyDictionary
                     "audio_path": audio_path
                 }
                 if new_word not in [word_entry["word"] for word_entry in st.session_state.words]:
