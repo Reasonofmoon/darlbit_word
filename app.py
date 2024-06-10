@@ -208,4 +208,17 @@ def display_words(words):
 
 filtered_words = st.session_state.words
 if selected_difficulty != '모두':
-    filtered_words = [word for
+    filtered_words = [word for word in filtered_words if word['difficulty'] == selected_difficulty]
+if selected_topic:
+    filtered_words = [word for word in filtered_words if selected_topic.lower() in word['topic'].lower()]
+
+display_words(filtered_words)
+
+if show_deleted:
+    st.markdown("### 삭제된 단어")
+    display_words(st.session_state.deleted_words)
+
+if st.button('모든 삭제된 단어 복원'):
+    st.session_state.words.extend(st.session_state.deleted_words)
+    st.session_state.deleted_words = []
+    st.experimental_rerun()
