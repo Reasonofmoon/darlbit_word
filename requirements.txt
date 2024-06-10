@@ -4,3 +4,4 @@ beautifulsoup4
 requests
 pandas
 PyDictionary
+xlsxwriter
