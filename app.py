@@ -3,6 +3,7 @@ import base64
 import requests
 from bs4 import BeautifulSoup
 from gtts import gTTS
+from gtts.tts import gTTSError
 import os
 import pandas as pd
 
@@ -124,10 +125,14 @@ with col1:
 
     # Function to generate pronunciation audio
     def generate_pronunciation(word):
-        tts = gTTS(text=word, lang='en')
-        audio_path = f"./{word}.mp3"
-        tts.save(audio_path)
-        return audio_path
+        try:
+            tts = gTTS(text=word, lang='en')
+            audio_path = f"./{word}.mp3"
+            tts.save(audio_path)
+            return audio_path
+        except gTTSError as e:
+            st.warning(f"Error generating pronunciation for word: {word}. Skipping audio.")
+            return None
 
 
     # Upload CSV file
@@ -197,7 +202,7 @@ with col1:
             }
             data.append(word_info)
 
-            if st.session_state.play_pronunciation:
+            if st.session_state.play_pronunciation and word_entry["audio_path"]:
                 st.audio(word_entry["audio_path"], format='audio/mp3', start_time=0)
             st.image(word_entry["image_url"], caption=word_entry["word"])
 
@@ -231,7 +236,7 @@ with col1:
 with col2:
     st.markdown("## 앱 사용법")
     st.markdown("""
-    1. 화면 상단의 링크를 클릭하여 '달의이성'의 사이트와 소셜 미디어 채널에 접속할 수 있습니다.
+    1. 화면 상단의 링크를 클릭하여 관련 사이트와 소셜 미디어 채널에 접속할 수 있습니다.
     2. CSV 파일을 업로드하여 단어 리스트를 추가할 수 있습니다. 파일에는 'word', 'difficulty', 'topic', 'source', 'important' 열이 포함되어야 합니다.
     3. '발음 듣기' 체크박스를 선택하여 단어의 발음을 들을 수 있습니다.
     4. '난이도로 필터'와 '주제로 필터' 옵션을 사용하여 단어를 필터링할 수 있습니다.
