@@ -5,3 +5,4 @@ requests
 pandas
 PyDictionary
 xlsxwriter
+nltk
