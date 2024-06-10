@@ -1,6 +1,4 @@
-다음은 전체 코드입니다:
 
-```python
 import streamlit as st
 import base64
 import requests
@@ -244,5 +242,7 @@ with col2:
     6. '모든 삭제된 단어 복원' 버튼을 클릭하여 삭제된 단어를 복원할 수 있습니다.
     7. 단어 목록 아래의 'Excel 파일 다운로드' 링크를 클릭하여 현재 단어 목록을 Excel 파일로 다운로드 할 수 있습니다.
     """)
+
+
 
     st.warning("중요: 앱을 종료하기 전에 반드시 'Excel 파일 다운로드' 링크를 클릭하여 현재 단어 목록을 저장하십시오.")
