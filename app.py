@@ -8,6 +8,7 @@ import os
 import pandas as pd
 import re
 from PyDictionary import PyDictionary
+import io
 
 # Set page configuration with a title and icon
 st.set_page_config(
@@ -90,7 +91,6 @@ with col1:
     if 'play_pronunciation' not in st.session_state:
         st.session_state.play_pronunciation = True
 
-
     # Function to fetch word details from PyDictionary
     def fetch_word_details(word):
         dictionary = PyDictionary()
@@ -120,7 +120,6 @@ with col1:
 
         return definition, synonyms, antonyms
 
-
     # Function to generate pronunciation audio
     def generate_pronunciation(word):
         try:
@@ -130,7 +129,6 @@ with col1:
             return audio_path
         except gTTSError as e:
             return None
-
 
     # Text area for user input
     user_input = st.text_area("정리되지 않은 영어 단어 리스트 입력")
@@ -171,7 +169,6 @@ with col1:
     # Toggle switch for pronunciation
     st.session_state.play_pronunciation = st.checkbox('발음 듣기', value=st.session_state.play_pronunciation)
 
-
     # Display the words in a table format
     def display_words(words):
         data = []
@@ -197,22 +194,27 @@ with col1:
         writer = pd.ExcelWriter(excel_file, engine='xlsxwriter')
         df.to_excel(writer, index=False, sheet_name='Sheet1')
         writer.save()
+        writer.close()
         excel_file.seek(0)
         b64 = base64.b64encode(excel_file.read()).decode()
         href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="words.xlsx">Excel 파일 다운로드</a>'
         st.markdown(href, unsafe_allow_html=True)
 
-
     display_words(st.session_state.words)
 
-    if show_deleted:
-        st.markdown("### 삭제된 단어")
-        display_words(st.session_state.deleted_words)
+    if st.button('모든 단어 삭제'):
+        st.session_state.deleted_words.extend(st.session_state.words)
+        st.session_state.words = []
+        st.experimental_rerun()
 
     if st.button('모든 삭제된 단어 복원'):
         st.session_state.words.extend(st.session_state.deleted_words)
         st.session_state.deleted_words = []
         st.experimental_rerun()
+
+    if st.session_state.deleted_words:
+        with st.expander("삭제된 단어 보기"):
+            display_words(st.session_state.deleted_words)
 
 with col2:
     st.markdown("## 앱 사용법")
@@ -221,7 +223,7 @@ with col2:
     2. 정리되지 않은 영어 단어 리스트를 텍스트 영역에 입력합니다. 한 줄에 한 단어씩 입력하거나 공백으로 구분하여 여러 단어를 입력할 수 있습니다.
     3. 입력한 단어 리스트는 자동으로 분석되어 의미, 동의어, 반의어, 파생어, 예문 등의 정보와 함께 표시됩니다.
     4. '발음 듣기' 체크박스를 선택하여 단어의 발음을 들을 수 있습니다.
-    5. '삭제된 단어 보기' 체크박스를 선택하여 삭제된 단어를 확인할 수 있습니다.
+    5. '모든 단어 삭제' 버튼을 클릭하여 현재 단어 목록을 삭제할 수 있습니다.
     6. '모든 삭제된 단어 복원' 버튼을 클릭하여 삭제된 단어를 복원할 수 있습니다.
     7. 단어 목록 아래의 'Excel 파일 다운로드' 링크를 클릭하여 현재 단어 목록을 Excel 파일로 다운로드할 수 있습니다.
     """)
